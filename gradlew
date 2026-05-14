@@ -1,2 +1,3 @@
-#!/bin/sh
-echo "Placeholder gradlew - replace with real wrapper from previous repo"
+#!/usr/bin/env sh
+
+gradle "$@" 
