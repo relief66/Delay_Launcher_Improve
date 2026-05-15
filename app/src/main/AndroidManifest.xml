@@ -11,7 +11,7 @@
         android:label="Delay Launcher Improve"
         android:roundIcon="@android:drawable/sym_def_app_icon"
         android:supportsRtl="true"
-        android:theme="@style/Theme.DelayLauncherImprove">
+        android:theme="@style/Theme.delaylauncherimprove">
 
         <activity
             android:name=".MainActivity"
@@ -27,7 +27,7 @@
             android:name=".CountdownActivity"
             android:exported="false"
             android:screenOrientation="landscape"
-            android:theme="@style/Theme.DelayLauncherImprove.NoActionBar" />
+            android:theme="@style/Theme.delaylauncherimprove.NoActionBar" />
 
         <receiver
             android:name=".BootReceiver"
