@@ -2,23 +2,29 @@ package com.example.delaylauncherimprove;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,11 +42,10 @@ public class MainActivity extends AppCompatActivity {
     private List<AppInfo> installedApps = new ArrayList<>();
     private boolean isUpdatingSpinners = false;
 
-    // Gestione Auto-Repeat scorrimento continuo secondi
     private final Handler repeatUpdateHandler = new Handler();
     private boolean mAutoIncrement = false;
     private boolean mAutoDecrement = false;
-    private static final long REPEAT_DELAY = 100; // Millisecondi tra i passi
+    private static final long REPEAT_DELAY = 100;
 
     private final Runnable incrementRunnable = new Runnable() {
         @Override
@@ -87,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
         prefs = getSharedPreferences("DelayLauncherPrefs", Context.MODE_PRIVATE);
         currentDelay = prefs.getInt("delay_seconds", 20);
 
-        // Collegamento componenti grafici
         spinnerApp1 = findViewById(R.id.spinner_app1);
         spinnerApp2 = findViewById(R.id.spinner_app2);
         spinnerLauncher = findViewById(R.id.spinner_launcher);
@@ -105,22 +109,34 @@ public class MainActivity extends AppCompatActivity {
 
         recuperaApplicazioniInstallate();
 
-        // Popolamento iniziale
+        // Inizializzazione con l'adattatore custom grafico
         popolaSpinner(spinnerApp1, installedApps);
         popolaSpinner(spinnerApp2, installedApps);
         popolaSpinner(spinnerLauncher, installedApps);
 
-        // Ripristino dati salvati
-        setSpinnerSelection(spinnerApp1, prefs.getString("app1_package", ""));
-        setSpinnerSelection(spinnerApp2, prefs.getString("app2_package", ""));
-        setSpinnerSelection(spinnerLauncher, prefs.getString("launcher_package", ""));
+        String salvatoApp1 = prefs.getString("app1_package", "");
+        String salvatoApp2 = prefs.getString("app2_package", "");
+        String salvatoLauncher = prefs.getString("launcher_package", "DEFAULT_QUICKSTEP");
 
-        // Listener per il salvataggio e filtri incrociati
+        if (salvatoLauncher.equals("DEFAULT_QUICKSTEP")) {
+            String quickstepPackage = trovaPackageDaLabel("Quickstep");
+            if (!quickstepPackage.isEmpty()) {
+                salvatoLauncher = quickstepPackage;
+                prefs.edit().putString("launcher_package", quickstepPackage).apply();
+            } else {
+                salvatoLauncher = "";
+                prefs.edit().putString("launcher_package", "").apply();
+            }
+        }
+
+        setSpinnerSelection(spinnerApp1, salvatoApp1);
+        setSpinnerSelection(spinnerApp2, salvatoApp2);
+        setSpinnerSelection(spinnerLauncher, salvatoLauncher);
+
         setupSpinnerListener(spinnerApp1, "app1_package");
         setupSpinnerListener(spinnerApp2, "app2_package");
         setupSpinnerListener(spinnerLauncher, "launcher_package");
 
-        // Touch continuo tasto MENO
         btnMinus.setOnTouchListener((v, event) -> {
             int action = event.getAction();
             if (action == MotionEvent.ACTION_DOWN) {
@@ -134,7 +150,6 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
-        // Touch continuo tasto PIÙ
         btnPlus.setOnTouchListener((v, event) -> {
             int action = event.getAction();
             if (action == MotionEvent.ACTION_DOWN) {
@@ -148,10 +163,8 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
-        // Click sul tasto AVVIO manuale
         btnAvvio.setOnClickListener(v -> {
             Toast.makeText(MainActivity.this, "Avvio manuale sequenza...", Toast.LENGTH_SHORT).show();
-            // Qui si interfaccerà con il servizio di countdown che scatta al boot
         });
 
         aggiornaFiltriEsclusione();
@@ -163,7 +176,8 @@ public class MainActivity extends AppCompatActivity {
         List<ApplicationInfo> apps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
 
         installedApps.clear();
-        installedApps.add(new AppInfo("Nessuna Applicazione", ""));
+        Drawable defaultIcon = ContextCompat.getDrawable(this, android.R.drawable.ic_menu_close_clear_cancel);
+        installedApps.add(new AppInfo("Nessuna Applicazione", "", defaultIcon));
 
         List<AppInfo> temporanea = new ArrayList<>();
         for (ApplicationInfo app : apps) {
@@ -177,29 +191,35 @@ public class MainActivity extends AppCompatActivity {
         installedApps.addAll(temporanea);
     }
 
-    private void popolaSpinner(Spinner spinner, List<AppInfo> listaApps) {
-        List<String> labels = new ArrayList<>();
-        for (AppInfo app : listaApps) {
-            labels.add(app.getLabel());
+    private String trovaPackageDaLabel(String targetLabel) {
+        for (AppInfo app : installedApps) {
+            if (app.getLabel().equalsIgnoreCase(targetLabel)) return app.getPackageName();
         }
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, labels);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        for (AppInfo app : installedApps) {
+            if (app.getLabel().toLowerCase().contains(targetLabel.toLowerCase())) return app.getPackageName();
+        }
+        return "";
+    }
+
+    private void popolaSpinner(Spinner spinner, List<AppInfo> listaApps) {
+        CustomAppAdapter adapter = new CustomAppAdapter(this, listaApps);
         spinner.setAdapter(adapter);
     }
 
     private void setSpinnerSelection(Spinner spinner, String packageName) {
+        CustomAppAdapter adapter = (CustomAppAdapter) spinner.getAdapter();
+        if (adapter == null) return;
+        
         if (packageName.isEmpty()) {
             spinner.setSelection(0);
             return;
         }
-        for (int i = 0; i < installedApps.size(); i++) {
-            if (installedApps.get(i).getPackageName().equals(packageName)) {
-                for (int j = 0; j < spinner.getCount(); j++) {
-                    if (spinner.getItemAtPosition(j).toString().equals(installedApps.get(i).getLabel())) {
-                        spinner.setSelection(j);
-                        return;
-                    }
-                }
+        
+        for (int i = 0; i < adapter.getCount(); i++) {
+            AppInfo app = adapter.getItem(i);
+            if (app != null && app.getPackageName().equals(packageName)) {
+                spinner.setSelection(i);
+                return;
             }
         }
     }
@@ -210,14 +230,11 @@ public class MainActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (isUpdatingSpinners) return;
 
-                String selectedLabel = parent.getItemAtPosition(position).toString();
-                String targetPackage = "";
-                for (AppInfo app : installedApps) {
-                    if (app.getLabel().equals(selectedLabel)) {
-                        targetPackage = app.getPackageName();
-                        break;
-                    }
-                }
+                CustomAppAdapter adapter = (CustomAppAdapter) parent.getAdapter();
+                if (adapter == null) return;
+                
+                AppInfo selectedApp = adapter.getItem(position);
+                String targetPackage = (selectedApp != null) ? selectedApp.getPackageName() : "";
 
                 prefs.edit().putString(prefKey, targetPackage).apply();
                 
@@ -280,21 +297,83 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // Limitiamo la lunghezza del testo per non rompere le colonne in auto
-        if (app1.length() > 18) app1 = app1.substring(0, 16) + "..";
-        if (app2.length() > 18) app2 = app2.substring(0, 16) + "..";
-        if (launcher.length() > 18) launcher = launcher.substring(0, 16) + "..";
+        if (app1.length() > 14) app1 = app1.substring(0, 12) + "..";
+        if (app2.length() > 14) app2 = app2.substring(0, 12) + "..";
+        if (launcher.length() > 14) launcher = launcher.substring(0, 12) + "..";
 
         String testoApplicazioni = "App 1:\n" + app1 + "\nApp 2:\n" + app2 + "\nLauncher:\n" + launcher;
         tvColApplicazioni.setText(testoApplicazioni);
 
-        String testoDelay = currentDelay + " secondi\n\nCountdown\ncon animazione";
+        String testoDelay = currentDelay + " secondi\n\nCountdown\nattivo";
         tvColDelay.setText(testoDelay);
 
         if (pkgLauncher.isEmpty()) {
-            tvColStato.setText("⚠ Incompleto\n\nScegli un\nLauncher");
+            tvColStato.setText("⚠ Errore\n\nScegli Home");
         } else {
-            tvColStato.setText("✓ Pronto\n\nTutto pronto\nper l'avvio");
+            tvColStato.setText("✓ Pronto\n\nConfigurato");
+        }
+    }
+
+    // ADATTATORE GRAFICO PERSONALIZZATO PER SELEZIONE E BOLD
+    private static class CustomAppAdapter extends ArrayAdapter<AppInfo> {
+        private final LayoutInflater inflater;
+
+        public CustomAppAdapter(@NonNull Context context, @NonNull List<AppInfo> objects) {
+            super(context, 0, objects);
+            inflater = LayoutInflater.from(context);
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            return createCustomView(position, convertView, parent, false);
+        }
+
+        @Override
+        public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            return createCustomView(position, convertView, parent, true);
+        }
+
+        private View createCustomView(int position, View convertView, ViewGroup parent, boolean isDropdown) {
+            if (convertView == null) {
+                convertView = inflater.inflate(R.layout.spinner_item_custom, parent, false);
+            }
+
+            ImageView iconView = convertView.findViewById(R.id.spinner_app_icon);
+            TextView labelView = convertView.findViewById(R.id.spinner_app_label);
+            TextView packageView = convertView.findViewById(R.id.spinner_app_package);
+
+            AppInfo app = getItem(position);
+
+            if (app != null) {
+                labelView.setText(app.getLabel());
+                
+                if (app.getPackageName().isEmpty()) {
+                    // Impostazioni per "Nessuna Applicazione"
+                    packageView.setText("Nessuna azione pianificata");
+                    labelView.setTypeface(null, Typeface.NORMAL);
+                    labelView.setTextColor(0xFF76FF03); // Verde acido per la voce nulla
+                    iconView.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+                } else {
+                    // Impostazioni per app reale selezionata
+                    packageView.setText(app.getPackageName());
+                    labelView.setTextColor(0xFFFFFFFF); // Bianco
+                    
+                    if (!isDropdown) {
+                        // Se l'app è selezionata nel box chiuso, diventa BOLD
+                        labelView.setTypeface(null, Typeface.BOLD);
+                    } else {
+                        labelView.setTypeface(null, Typeface.NORMAL);
+                    }
+                    
+                    if (app.getIcon() != null) {
+                        iconView.setImageDrawable(app.getIcon());
+                    } else {
+                        iconView.setImageResource(android.R.mipmap.sym_def_app_icon);
+                    }
+                }
+            }
+            return convertView;
         }
     }
 }
