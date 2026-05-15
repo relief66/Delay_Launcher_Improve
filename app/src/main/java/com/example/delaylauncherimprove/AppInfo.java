@@ -1,4 +1,4 @@
-package com.example.Delay_Launcher_Improve;
+package com.example.delaylauncherimprove;
 
 import android.graphics.drawable.Drawable;
 
