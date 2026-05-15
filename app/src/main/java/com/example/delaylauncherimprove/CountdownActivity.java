@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -26,6 +28,7 @@ public class CountdownActivity extends AppCompatActivity {
     
     private MediaPlayer mpTick, mpChime, mpLoop;
     private boolean isInterrupted = false;
+    private final Handler scaglionaHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,42 +41,37 @@ public class CountdownActivity extends AppCompatActivity {
         progressCountdown = findViewById(R.id.progress_countdown);
         tvCountdownNumber = findViewById(R.id.tv_countdown_number);
         
-        // CORRETTO: Aggiunto il riferimento corretto a R.id per evitare errori di build
         View countdownRoot = findViewById(R.id.countdown_root);
 
-        // Configurazione iniziale della grafica del cerchio
         tvCountdownNumber.setText(String.valueOf(totalDelaySeconds));
         progressCountdown.setMax(totalDelaySeconds * 100);
         progressCountdown.setProgress(totalDelaySeconds * 100);
 
-        // Inizializzazione dei file Audio presenti in res/raw/
         mpTick = MediaPlayer.create(this, R.raw.tick_soft);
         mpChime = MediaPlayer.create(this, R.raw.chime_soft);
         mpLoop = MediaPlayer.create(this, R.raw.countdown_loop);
 
         if (mpLoop != null) {
             mpLoop.setLooping(true);
-            mpLoop.setVolume(0.4f, 0.4f); // Volume di sottofondo leggermente attenuato
+            mpLoop.setVolume(0.4f, 0.4f);
         }
 
-        // Intercettazione del tocco su tutto lo schermo per ANNULLARE la sequenza
         if (countdownRoot != null) {
             countdownRoot.setOnClickListener(v -> interruptSequence());
         }
 
-        // FASE 1: Lancio immediato delle prime due applicazioni in sequenza prima del timer
-        lanciaApplicazioniIniziali();
+        // FASE 1: Avvio del piano di lancio scaglionato
+        pianificaLanciScaglionati();
 
-        // FASE 2: Avvio del sottofondo sonoro ciclico e del countdown grafico
         if (mpLoop != null) mpLoop.start();
         startCountdown();
     }
 
-    private void lanciaApplicazioniIniziali() {
+    private void pianificaLanciScaglionati() {
         String app1Pkg = prefs.getString("app1_package", "");
         String app2Pkg = prefs.getString("app2_package", "");
 
-        // Avvio App 1 se configurata
+        // 1. App 1 parte IMMEDIATAMENTE al secondo zero del countdown
         if (!app1Pkg.isEmpty()) {
             Intent i1 = getPackageManager().getLaunchIntentForPackage(app1Pkg);
             if (i1 != null) {
@@ -82,13 +80,20 @@ public class CountdownActivity extends AppCompatActivity {
             }
         }
 
-        // Avvio App 2 se configurata
+        // 2. App 2 parte con un ritardo calcolato per non accavallarsi
         if (!app2Pkg.isEmpty()) {
-            Intent i2 = getPackageManager().getLaunchIntentForPackage(app2Pkg);
-            if (i2 != null) {
-                i2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(i2);
-            }
+            // Se il delay totale è alto usiamo 3 secondi (3000ms), altrimenti la metà del tempo totale
+            long ritardoApp2 = (totalDelaySeconds >= 6) ? 3000L : (totalDelaySeconds * 1000L) / 2;
+
+            scaglionaHandler.postDelayed(() -> {
+                if (!isInterrupted) {
+                    Intent i2 = getPackageManager().getLaunchIntentForPackage(app2Pkg);
+                    if (i2 != null) {
+                        i2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(i2);
+                    }
+                }
+            }, ritardoApp2);
         }
     }
 
@@ -104,7 +109,6 @@ public class CountdownActivity extends AppCompatActivity {
                 if (isInterrupted) return;
 
                 progressCountdown.setProgress((int) (millisUntilFinished / 10));
-
                 int secondsRemaining = (int) Math.ceil(millisUntilFinished / 1000.0);
                 tvCountdownNumber.setText(String.valueOf(secondsRemaining));
 
@@ -161,12 +165,14 @@ public class CountdownActivity extends AppCompatActivity {
 
     private void interruptSequence() {
         isInterrupted = true;
+        // Cancella eventuali lanci in coda dell'Handler se l'utente interrompe subito
+        scaglionaHandler.removeCallbacksAndMessages(null);
+        
         if (countDownTimer != null) {
             countDownTimer.cancel();
         }
         
         liberaMediaPlayers();
-
         Toast.makeText(this, "🛑 LANCIO INTERROTTO DALL'UTENTE", Toast.LENGTH_SHORT).show();
         tornaAllaConfigurazione();
     }
@@ -193,6 +199,7 @@ public class CountdownActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        scaglionaHandler.removeCallbacksAndMessages(null);
         liberaMediaPlayers();
         if (countDownTimer != null) {
             countDownTimer.cancel();
