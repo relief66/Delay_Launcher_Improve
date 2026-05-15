@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.delaylauncher'
+    namespace 'com.example.delaylauncherimprove'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.delaylauncher"
+        applicationId "com.example.delaylauncherimprove"
         minSdk 26 // Android 8.0 (Oreo) - Perfetto per la stabilità su hardware Carlinkit
         targetSdk 33
         versionCode 1
