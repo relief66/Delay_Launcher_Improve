@@ -37,7 +37,9 @@ public class CountdownActivity extends AppCompatActivity {
 
         progressCountdown = findViewById(R.id.progress_countdown);
         tvCountdownNumber = findViewById(R.id.tv_countdown_number);
-        View countdownRoot = findViewById(countdown_root);
+        
+        // CORRETTO: Aggiunto il riferimento corretto a R.id per evitare errori di build
+        View countdownRoot = findViewById(R.id.countdown_root);
 
         // Configurazione iniziale della grafica del cerchio
         tvCountdownNumber.setText(String.valueOf(totalDelaySeconds));
@@ -55,7 +57,9 @@ public class CountdownActivity extends AppCompatActivity {
         }
 
         // Intercettazione del tocco su tutto lo schermo per ANNULLARE la sequenza
-        countdownRoot.setOnClickListener(v -> interruptSequence());
+        if (countdownRoot != null) {
+            countdownRoot.setOnClickListener(v -> interruptSequence());
+        }
 
         // FASE 1: Lancio immediato delle prime due applicazioni in sequenza prima del timer
         lanciaApplicazioniIniziali();
@@ -89,11 +93,9 @@ public class CountdownActivity extends AppCompatActivity {
     }
 
     private void startCountdown() {
-        // Carichiamo l'animazione di pulsazione per il testo del cerchio
         final Animation pulseAnim = AnimationUtils.loadAnimation(this, R.anim.pulse);
         final long totalMillis = totalDelaySeconds * 1000L;
 
-        // Utilizziamo intervalli frequenti (50ms) per rendere fluida la riduzione dell'anello verde
         countDownTimer = new CountDownTimer(totalMillis, 50) {
             int lastSecondsRemaining = totalDelaySeconds;
 
@@ -101,23 +103,21 @@ public class CountdownActivity extends AppCompatActivity {
             public void onTick(long millisUntilFinished) {
                 if (isInterrupted) return;
 
-                // Aggiornamento preciso della barra circolare progressiva
                 progressCountdown.setProgress((int) (millisUntilFinished / 10));
 
                 int secondsRemaining = (int) Math.ceil(millisUntilFinished / 1000.0);
                 tvCountdownNumber.setText(String.valueOf(secondsRemaining));
 
-                // Scatta ogni volta che cambia il secondo effettivo
                 if (secondsRemaining < lastSecondsRemaining) {
                     lastSecondsRemaining = secondsRemaining;
                     
-                    // Riproduce il suono del "Tick" sincrono
                     if (mpTick != null) {
                         mpTick.seekTo(0);
                         mpTick.start();
                     }
-                    // Attiva l'animazione grafica di sobbalzo sul cerchio numerico
-                    tvCountdownNumber.startAnimation(pulseAnim);
+                    if (pulseAnim != null) {
+                        tvCountdownNumber.startAnimation(pulseAnim);
+                    }
                 }
             }
 
@@ -128,15 +128,12 @@ public class CountdownActivity extends AppCompatActivity {
                 tvCountdownNumber.setText("0");
                 progressCountdown.setProgress(0);
 
-                // Ferma il loop audio di sottofondo
                 if (mpLoop != null && mpLoop.isPlaying()) {
                     mpLoop.stop();
                 }
 
-                // Riproduce il suono di completamento "Chime"
                 if (mpChime != null) {
                     mpChime.start();
-                    // Aspettiamo un istante che il suono parta prima di passare al Launcher
                     mpChime.setOnCompletionListener(mp -> lanciaLauncherFinale());
                 } else {
                     lanciaLauncherFinale();
@@ -152,7 +149,7 @@ public class CountdownActivity extends AppCompatActivity {
             if (intent != null) {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
-                finish(); // Chiude definitivamente l'attività per liberare RAM
+                finish();
             } else {
                 Toast.makeText(this, "Impossibile avviare il Launcher selezionato!", Toast.LENGTH_LONG).show();
                 tornaAllaConfigurazione();
@@ -168,7 +165,6 @@ public class CountdownActivity extends AppCompatActivity {
             countDownTimer.cancel();
         }
         
-        // Rilascio e blocco immediato di tutti i flussi audio per evitare rumori residui
         liberaMediaPlayers();
 
         Toast.makeText(this, "🛑 LANCIO INTERROTTO DALL'UTENTE", Toast.LENGTH_SHORT).show();
@@ -176,7 +172,6 @@ public class CountdownActivity extends AppCompatActivity {
     }
 
     private void tornaAllaConfigurazione() {
-        // Se siamo partiti dal Boot, l'utente toccando lo schermo deve poter accedere alla UI di configurazione
         boolean isAutoStart = getIntent().getBooleanExtra("auto_start", false);
         if (isAutoStart) {
             Intent intent = new Intent(this, MainActivity.class);
@@ -198,7 +193,6 @@ public class CountdownActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Massima sicurezza: se l'attività viene chiusa dal sistema, puliamo la memoria audio
         liberaMediaPlayers();
         if (countDownTimer != null) {
             countDownTimer.cancel();
