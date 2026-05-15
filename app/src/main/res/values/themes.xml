@@ -1,12 +1,12 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.DelayLauncher" parent="Theme.AppCompat.NoActionBar">
+    <style name="Theme.delaylauncherimprove" parent="Theme.AppCompat.NoActionBar">
         <item name="colorPrimary">#76FF03</item>
         <item name="colorPrimaryDark">#000000</item>
         <item name="colorAccent">#76FF03</item>
         <item name="android:windowBackground">#000000</item>
     </style>
 
-    <style name="Theme.DelayLauncher.NoActionBar">
+    <style name="Theme.delaylauncherimprove.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:windowFullscreen">true</item>
