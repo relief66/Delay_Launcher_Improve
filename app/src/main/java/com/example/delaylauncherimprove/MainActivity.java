@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -27,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnMinus, btnPlus;
 
     private SharedPreferences prefs;
-    private int currentDelay = 20; // Valore di default iniziale
+    private int currentDelay = 20;
     private List<AppInfo> installedApps = new ArrayList<>();
 
     @Override
@@ -38,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
         prefs = getSharedPreferences("DelayLauncherPrefs", Context.MODE_PRIVATE);
         currentDelay = prefs.getInt("delay_seconds", 20);
 
-        // Inizializzazione componenti grafiche
         spinnerApp1 = findViewById(R.id.spinner_app1);
         spinnerApp2 = findViewById(R.id.spinner_app2);
         spinnerLauncher = findViewById(R.id.spinner_launcher);
@@ -49,15 +49,12 @@ public class MainActivity extends AppCompatActivity {
 
         tvDelayValue.setText(String.valueOf(currentDelay));
 
-        // Caricamento delle app installate sul box
         recuperaApplicazioniInstallate();
 
-        // Configurazione degli Spinner
         configuraSpinner(spinnerApp1, "app1_package");
         configuraSpinner(spinnerApp2, "app2_package");
         configuraSpinner(spinnerLauncher, "launcher_package");
 
-        // Gestione Click per decrementare il Delay (Freno di sicurezza a 3 secondi minimo)
         btnMinus.setOnClickListener(v -> {
             if (currentDelay > 3) {
                 currentDelay--;
@@ -69,7 +66,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Gestione Click per incrementare il Delay
         btnPlus.setOnClickListener(v -> {
             currentDelay++;
             tvDelayValue.setText(String.valueOf(currentDelay));
@@ -85,18 +81,17 @@ public class MainActivity extends AppCompatActivity {
         List<ApplicationInfo> apps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
 
         installedApps.clear();
-        // Opzione di default per lasciare lo slot vuoto
-        installedApps.add(new AppInfo("Nessuna Applicazione Selezione", ""));
+        // Slot vuoto usando il costruttore senza icona
+        installedApps.add(new AppInfo("Nessuna Applicazione Selezionata", ""));
 
         for (ApplicationInfo app : apps) {
-            // Filtriamo solo le app che l'utente può effettivamente lanciare (hanno un'activity di lancio)
             if (pm.getLaunchIntentForPackage(app.packageName) != null) {
                 String nomeLabel = app.loadLabel(pm).toString();
-                installedApps.add(new AppInfo(nomeLabel, app.packageName));
+                Drawable iconaApp = app.loadIcon(pm); // Recupera l'icona reale dell'app
+                installedApps.add(new AppInfo(nomeLabel, app.packageName, iconaApp));
             }
         }
 
-        // Ordina le applicazioni alfabeticamente per facilitare la scelta nel box
         Collections.sort(installedApps, (a, b) -> a.getLabel().compareToIgnoreCase(b.getLabel()));
     }
 
@@ -110,7 +105,6 @@ public class MainActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
 
-        // Seleziona l'app precedentemente salvata se esiste
         String savedPkg = prefs.getString(prefKey, "");
         if (!savedPkg.isEmpty()) {
             for (int i = 0; i < installedApps.size(); i++) {
@@ -121,7 +115,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // Listener per salvare istantaneamente la scelta nello storage del box
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
