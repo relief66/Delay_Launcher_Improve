@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.delaylauncher">
+    package="com.example.delaylauncherimprove">
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="Delay Launcher"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:icon="@android:drawable/sym_def_app_icon"
+        android:label="Delay Launcher Improve"
+        android:roundIcon="@android:drawable/sym_def_app_icon"
         android:supportsRtl="true"
-        android:theme="@style/Theme.DelayLauncher">
+        android:theme="@style/Theme.DelayLauncherImprove">
 
         <activity
             android:name=".MainActivity"
@@ -27,7 +27,7 @@
             android:name=".CountdownActivity"
             android:exported="false"
             android:screenOrientation="landscape"
-            android:theme="@style/Theme.DelayLauncher.NoActionBar" />
+            android:theme="@style/Theme.DelayLauncherImprove.NoActionBar" />
 
         <receiver
             android:name=".BootReceiver"
