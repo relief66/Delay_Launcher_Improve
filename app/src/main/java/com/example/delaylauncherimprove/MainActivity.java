@@ -62,13 +62,15 @@ public class MainActivity extends AppCompatActivity {
 
         tvDelayValue.setText(String.valueOf(currentDelay));
 
-        // Gestione Click per decrementare il Delay
+        // Gestione Click per decrementare il Delay (Freno di sicurezza a 3 secondi minimo)
         btnMinus.setOnClickListener(v -> {
-            if (currentDelay > 1) {
+            if (currentDelay > 3) { // Tagliato l'accesso a 1 e 2 secondi
                 currentDelay--;
                 tvDelayValue.setText(String.valueOf(currentDelay));
                 saveDelay();
                 updateRiepilogo();
+            } else {
+                Toast.makeText(MainActivity.this, "Minimo 3 secondi richiesti per proteggere l'avvio!", Toast.LENGTH_SHORT).show();
             }
         });
 
