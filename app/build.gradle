@@ -10,16 +10,33 @@ android {
         applicationId "com.example.delaylauncherimprove"
         minSdk 26 // Android 8.0 (Oreo) - Perfetto per la stabilità su hardware Carlinkit
         targetSdk 33
-        versionCode 1
-        versionName "1.0"
+        
+        // Legge il numero di build da GitHub per incrementarlo sempre, altrimenti usa 1 di fallback
+        versionCode System.getenv("GITHUB_RUN_NUMBER") != null ? System.getenv("GITHUB_RUN_NUMBER").toInteger() : 1
+        versionName "1.0." + (System.getenv("GITHUB_RUN_NUMBER") != null ? System.getenv("GITHUB_RUN_NUMBER") : "0")
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // Configurazione di una firma fissa basata sulla chiave di debug stabile del server
+    signingConfigs {
+        stableDebug {
+            storeFile file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
+            // Applichiamo la firma stabile così l'autoradio la riconosce come un aggiornamento valido
+            signingConfig signingConfigs.stableDebug
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            signingConfig signingConfigs.stableDebug
         }
     }
     
