@@ -2,226 +2,474 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212"
+    android:background="#000000"
     android:keepScreenOn="true">
 
     <ImageView
         android:id="@+id/iv_background_watermark"
-        android:layout_width="350dp"
-        android:layout_height="350dp"
+        android:layout_width="420dp"
+        android:layout_height="420dp"
         android:layout_centerInParent="true"
         android:scaleType="fitCenter"
-        android:src="@mipmap/ic_launcher" />
+        android:src="@mipmap/ic_launcher"
+        android:alpha="0.06" />
 
-    <TextView
-        android:id="@+id/tv_titolo_main"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/layout_header"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_marginStart="24dp"
+        android:orientation="vertical"
         android:layout_marginTop="12dp"
-        android:text="DELAY LAUNCHER"
-        android:textColor="#FFFFFF"
-        android:textSize="22sp"
-        android:textStyle="bold" />
+        android:gravity="center_horizontal">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_box"
+                android:tint="#FFFFFF"
+                android:layout_marginEnd="8dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DELAY "
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LAUNCHER"
+                android:textColor="#76FF03"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <RelativeLayout
+            android:layout_width="320dp"
+            android:layout_height="10dp"
+            android:layout_marginTop="4dp">
+            
+            <View
+                android:layout_width="145dp"
+                android:layout_height="2dp"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:background="#76FF03" />
+
+            <View
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_centerInParent="true"
+                android:background="#76FF03" />
+
+            <View
+                android:layout_width="145dp"
+                android:layout_height="2dp"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:background="#76FF03" />
+        </RelativeLayout>
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/layout_configurazione"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/tv_titolo_main"
+        android:layout_below="@id/layout_header"
+        android:layout_above="@id/layout_riepilogo_container"
         android:orientation="vertical"
         android:paddingHorizontal="16dp"
-        android:paddingTop="8dp">
+        android:gravity="center_vertical">
 
         <GridLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:columnCount="2"
-            android:rowCount="2"
-            android:alignmentMode="alignBounds">
+            android:rowCount="2">
 
-            <LinearLayout
+            <RelativeLayout
+                android:id="@+id/box_app1"
                 android:layout_width="0dp"
-                android:layout_height="65dp"
+                android:layout_height="72dp"
                 android:layout_columnWeight="1"
                 android:layout_margin="6dp"
-                android:background="#26FFFFFF"
-                android:orientation="vertical"
-                android:padding="4dp">
+                android:background="#472C2C2C"
+                android:padding="6dp">
+                
                 <TextView
+                    android:id="@+id/lbl_app1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="APP 1"
                     android:textColor="#76FF03"
-                    android:textSize="11sp" />
+                    android:textSize="11sp"
+                    android:textStyle="bold"/>
+
+                <ImageView
+                    android:id="@+id/icon_app1"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_below="@id/lbl_app1"
+                    android:layout_marginTop="4dp"
+                    android:src="@android:drawable/ic_menu_sym_def_app_icon"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/lbl_app1"
+                    android:layout_toRightOf="@id/icon_app1"
+                    android:layout_toLeftOf="@+id/arrow_app1"
+                    android:layout_marginStart="8dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/txt_name_app1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Seleziona Applicazione"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:maxLines="1"/>
+                    <TextView
+                        android:id="@+id/txt_pkg_app1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nessun pacchetto"
+                        android:textColor="#888888"
+                        android:textSize="10sp"
+                        android:maxLines="1"/>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/arrow_app1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:text="▼"
+                    android:textColor="#FFFFFF"
+                    android:layout_marginEnd="4dp"/>
+
                 <Spinner
                     android:id="@+id/spinner_app1"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-            </LinearLayout>
+                    android:layout_height="match_parent"
+                    android:alpha="0" />
+            </RelativeLayout>
 
-            <LinearLayout
+            <RelativeLayout
+                android:id="@+id/box_app2"
                 android:layout_width="0dp"
-                android:layout_height="65dp"
+                android:layout_height="72dp"
                 android:layout_columnWeight="1"
                 android:layout_margin="6dp"
-                android:background="#26FFFFFF"
-                android:orientation="vertical"
-                android:padding="4dp">
+                android:background="#472C2C2C"
+                android:padding="6dp">
+                
                 <TextView
+                    android:id="@+id/lbl_app2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="APP 2"
                     android:textColor="#76FF03"
-                    android:textSize="11sp" />
+                    android:textSize="11sp"
+                    android:textStyle="bold"/>
+
+                <ImageView
+                    android:id="@+id/icon_app2"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_below="@id/lbl_app2"
+                    android:layout_marginTop="4dp"
+                    android:src="@android:drawable/ic_menu_sym_def_app_icon"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/lbl_app2"
+                    android:layout_toRightOf="@id/icon_app2"
+                    android:layout_toLeftOf="@+id/arrow_app2"
+                    android:layout_marginStart="8dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/txt_name_app2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Seleziona Applicazione"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:maxLines="1"/>
+                    <TextView
+                        android:id="@+id/txt_pkg_app2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nessun pacchetto"
+                        android:textColor="#888888"
+                        android:textSize="10sp"
+                        android:maxLines="1"/>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/arrow_app2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:text="▼"
+                    android:textColor="#FFFFFF"
+                    android:layout_marginEnd="4dp"/>
+
                 <Spinner
                     android:id="@+id/spinner_app2"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-            </LinearLayout>
+                    android:layout_height="match_parent"
+                    android:alpha="0" />
+            </RelativeLayout>
 
             <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="65dp"
+                android:layout_height="72dp"
                 android:layout_columnWeight="1"
                 android:layout_margin="6dp"
-                android:background="#26FFFFFF"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
+                android:background="#472C2C2C"
+                android:orientation="vertical"
                 android:padding="6dp">
+                
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="DELAY (sec)"
+                    android:text="DELAY (secondi)"
                     android:textColor="#76FF03"
                     android:textSize="11sp"
-                    android:layout_marginEnd="8dp"/>
-                <Button
-                    android:id="@+id/btn_minus"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:text="-"
-                    android:textSize="18sp"/>
-                <TextView
-                    android:id="@+id/tv_delay_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="12dp"
-                    android:text="25"
-                    android:textColor="#76FF03"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-                <Button
-                    android:id="@+id/btn_plus"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:text="+"
-                    android:textSize="18sp"/>
+                    android:textStyle="bold"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    
+                    <Button
+                        android:id="@+id/btn_minus"
+                        android:layout_width="45dp"
+                        android:layout_height="38dp"
+                        android:text="—"
+                        android:textColor="#FFFFFF"
+                        android:backgroundTint="#2D2D2D"
+                        android:textSize="16sp"/>
+
+                    <TextView
+                        android:id="@+id/tv_delay_value"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="25"
+                        android:textColor="#76FF03"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btn_plus"
+                        android:layout_width="45dp"
+                        android:layout_height="38dp"
+                        android:text="+"
+                        android:textColor="#FFFFFF"
+                        android:backgroundTint="#2D2D2D"
+                        android:textSize="16sp"/>
+                </LinearLayout>
             </LinearLayout>
 
-            <LinearLayout
+            <RelativeLayout
+                android:id="@+id/box_launcher"
                 android:layout_width="0dp"
-                android:layout_height="65dp"
+                android:layout_height="72dp"
                 android:layout_columnWeight="1"
                 android:layout_margin="6dp"
-                android:background="#26FFFFFF"
-                android:orientation="vertical"
-                android:padding="4dp">
+                android:background="#472C2C2C"
+                android:padding="6dp">
+                
                 <TextView
+                    android:id="@+id/lbl_launcher"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="LAUNCHER"
                     android:textColor="#76FF03"
-                    android:textSize="11sp" />
+                    android:textSize="11sp"
+                    android:textStyle="bold"/>
+
+                <ImageView
+                    android:id="@+id/icon_launcher"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_below="@id/lbl_launcher"
+                    android:layout_marginTop="4dp"
+                    android:src="@android:drawable/ic_menu_sym_def_app_icon"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/lbl_launcher"
+                    android:layout_toRightOf="@id/icon_launcher"
+                    android:layout_toLeftOf="@+id/arrow_launcher"
+                    android:layout_marginStart="8dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/txt_name_launcher"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Seleziona Home"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:maxLines="1"/>
+                    <TextView
+                        android:id="@+id/txt_pkg_launcher"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nessun pacchetto"
+                        android:textColor="#888888"
+                        android:textSize="10sp"
+                        android:maxLines="1"/>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/arrow_launcher"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:text="▼"
+                    android:textColor="#FFFFFF"
+                    android:layout_marginEnd="4dp"/>
+
                 <Spinner
                     android:id="@+id/spinner_launcher"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-            </LinearLayout>
+                    android:layout_height="match_parent"
+                    android:alpha="0" />
+            </RelativeLayout>
         </GridLayout>
 
         <Button
             android:id="@+id/btn_avvio"
-            android:layout_width="220dp"
-            android:layout_height="45dp"
+            android:layout_width="240dp"
+            android:layout_height="44dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginVertical="8dp"
+            android:layout_marginTop="10dp"
             android:backgroundTint="#76FF03"
             android:text="▶ AVVIO"
             android:textColor="#000000"
             android:textSize="16sp"
             android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layout_riepilogo_container"
+        android:layout_width="match_parent"
+        android:layout_height="145dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginBottom="10dp"
+        android:background="#261A1A1A"
+        android:orientation="vertical"
+        android:padding="8dp">
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="≡ RIEPILOGO CONFIGURAZIONE"
+            android:textColor="#76FF03"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="6dp"/>
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#26FFFFFF"
-            android:orientation="vertical"
-            android:padding="8dp"
-            android:layout_marginTop="4dp">
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
             
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="📋 RIEPILOGO CONFIGURAZIONE"
-                android:textColor="#76FF03"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="4dp"/>
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingEnd="4dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🌿 SEQUENZA"
+                    android:textColor="#76FF03"
+                    android:textSize="10sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1. Avvia App 1\n2. Avvia App 2\n3. Attendi Delay\n4. Avvia Launcher"
+                    android:textColor="#BBBBBB"
+                    android:textSize="10sp"
+                    android:layout_marginTop="4dp"
+                    android:lineSpacingMultiplier="1.1"/>
+            </LinearLayout>
+
+            <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#33FFFFFF"/>
 
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1.3"
+                android:orientation="vertical"
+                android:paddingHorizontal="6dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ℹ APPLICAZIONI"
+                    android:textColor="#76FF03"
+                    android:textSize="10sp"
+                    android:textStyle="bold"/>
                 <TextView
                     android:id="@+id/tv_col_applicazioni"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1.5"
-                    android:textColor="#CCCCCC"
-                    android:textSize="11sp" />
-                <TextView
-                    android:id="@+id/tv_col_delay"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textColor="#CCCCCC"
-                    android:textSize="11sp" />
-                <TextView
-                    android:id="@+id/tv_col_stato"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textColor="#76FF03"
-                    android:textSize="11sp" />
+                    android:textColor="#BBBBBB"
+                    android:textSize="9sp"
+                    android:layout_marginTop="4dp"
+                    android:maxLines="5"
+                    android:lineSpacingMultiplier="1.0"/>
             </LinearLayout>
-        </LinearLayout>
-    </LinearLayout>
 
-    <RelativeLayout
-        android:id="@+id/layout_countdown"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#000000"
-        android:visibility="gone">
+            <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#33FFFFFF"/>
 
-        <ProgressBar
-            android:id="@+id/progress_circolare"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="220dp"
-            android:layout_height="220dp"
-            android:layout_centerInParent="true"
-            android:indeterminate="false"
-            android:progressDrawable="@android:drawable/progress_horizontal" />
-
-        <TextView
-            android:id="@+id/tv_countdown_big"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:textColor="#76FF03"
-            android:textSize="70sp"
-            android:textStyle="bold" />
-    </RelativeLayout>
-</RelativeLayout>
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:paddingHorizontal="4dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🕒 DELAY"
+                    android:textColor="#76FF03"
+                    android:textSize="10sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:id="@+id/tv_riepilogo_secondi"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="25"
+                    android:textColor="#76FF03"
+                    android:textSize="26sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="secondi\nCountdown attivo"
+                    android:textColor="#8
