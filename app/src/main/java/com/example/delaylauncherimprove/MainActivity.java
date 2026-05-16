@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
                 // Notifica gli spinner che i dati sono pronti
                 ((CustomAppAdapter) spinnerApp1.getAdapter()).notifyDataSetChanged();
                 ((CustomAppAdapter) spinnerApp2.getAdapter()).notifyDataSetChanged();
-                ((CustomAppAdapter) spinnerApp3.getAdapter()).notifyDataSetChanged();
+                ((CustomAppAdapter) spinnerLauncher.getAdapter()).notifyDataSetChanged();
 
                 String salvatoApp1 = prefs.getString("app1_package", "");
                 String salvatoApp2 = prefs.getString("app2_package", "");
@@ -161,10 +161,8 @@ public class MainActivity extends AppCompatActivity {
 
                 updateTabellaRiepilogo();
 
-                // AUTOMATISMO AL BOOT: Se c'è un Launcher configurato, parte la sequenza da sola
-                if (!salvatoLauncher.isEmpty()) {
-                    eseguiSequenzaLancio();
-                }
+                // NESSUN AVVIO AUTOMATICO QUI. 
+                // L'app si apre, mostra la UI istantaneamente e aspetta il tuo "AVVIO".
             });
         }).start();
 
