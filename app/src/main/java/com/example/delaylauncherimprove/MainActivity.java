@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressCircolare;
     private TextView tvColApplicazioni, tvColDelay, tvColStato;
     private Button btnMinus, btnPlus, btnAvvio;
+    private ImageView ivBackgroundWatermark;
 
     private SharedPreferences prefs;
     private int currentDelay = 20;
@@ -94,17 +95,14 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // CORREZIONE PUNTO 4: Nessun blocco I/O qui dentro per eliminare lo schermo nero all'avvio
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        prefs = getSharedPreferences("DelayLauncherPrefs", Context.MODE_PRIVATE);
-        currentDelay = prefs.getInt("delay_seconds", 20);
-
-        // Inizializzazione Layouts Doppi
         layoutConfigurazione = findViewById(R.id.layout_configurazione);
         layoutCountdown = findViewById(R.id.layout_countdown);
+        ivBackgroundWatermark = findViewById(R.id.iv_background_watermark);
 
-        // Inizializzazione Viste Configurazione
         spinnerApp1 = findViewById(R.id.spinner_app1);
         spinnerApp2 = findViewById(R.id.spinner_app2);
         spinnerLauncher = findViewById(R.id.spinner_launcher);
@@ -115,44 +113,37 @@ public class MainActivity extends AppCompatActivity {
         btnMinus = findViewById(R.id.btn_minus);
         btnPlus = findViewById(R.id.btn_plus);
         btnAvvio = findViewById(R.id.btn_avvio);
-
-        // Inizializzazione Viste Immersive Countdown
         tvCountdownBig = findViewById(R.id.tv_countdown_big);
         progressCircolare = findViewById(R.id.progress_circolare);
 
-        tvDelayValue.setText(String.valueOf(currentDelay));
+        // CORREZIONE PUNTO 2: Calibrazione esatta opacità sfondo tartaruga a 0.3
+        if (ivBackgroundWatermark != null) {
+            ivBackgroundWatermark.setAlpha(0.30f);
+        }
 
-        // SETUP ADATTATORI (Inizialmente vuoti per mostrare subito la UI)
+        // Setup iniziale degli adapter vuoti per mostrare subito la UI senza attendere il caricamento dati
         spinnerApp1.setAdapter(new CustomAppAdapter(this, installedApps, spinnerApp1, 1));
         spinnerApp2.setAdapter(new CustomAppAdapter(this, installedApps, spinnerApp2, 2));
         spinnerLauncher.setAdapter(new CustomAppAdapter(this, launcherApps, spinnerLauncher, 3));
 
-        // ELIMINAZIONE SCHERMATA NERA: Thread asincrono con controllo del ciclo di vita
+        // Spostamento asincrono parallelo delle operazioni di lettura memoria e scansione pacchetti
         new Thread(() -> {
+            prefs = getSharedPreferences("DelayLauncherPrefs", Context.MODE_PRIVATE);
+            currentDelay = prefs.getInt("delay_seconds", 20);
             recuperaEFlitraApplicazioni();
+
             runOnUiThread(() -> {
-                // [SANITY CHECK] Evita crash se l'utente esce dall'app durante la scansione iniziale
                 if (isFinishing() || isDestroyed()) return;
 
-                // Notifica gli spinner che i dati sono pronti
+                tvDelayValue.setText(String.valueOf(currentDelay));
+
                 if (spinnerApp1.getAdapter() != null) ((CustomAppAdapter) spinnerApp1.getAdapter()).notifyDataSetChanged();
                 if (spinnerApp2.getAdapter() != null) ((CustomAppAdapter) spinnerApp2.getAdapter()).notifyDataSetChanged();
                 if (spinnerLauncher.getAdapter() != null) ((CustomAppAdapter) spinnerLauncher.getAdapter()).notifyDataSetChanged();
 
                 String salvatoApp1 = prefs.getString("app1_package", "");
                 String salvatoApp2 = prefs.getString("app2_package", "");
-                String salvatoLauncher = prefs.getString("launcher_package", "DEFAULT_QUICKSTEP");
-
-                if (salvatoLauncher.equals("DEFAULT_QUICKSTEP")) {
-                    String quickstepPackage = trovaPackageLauncherDaLabel("Quickstep");
-                    if (!quickstepPackage.isEmpty()) {
-                        salvatoLauncher = quickstepPackage;
-                        prefs.edit().putString("launcher_package", quickstepPackage).apply();
-                    } else {
-                        salvatoLauncher = "";
-                        prefs.edit().putString("launcher_package", "").apply();
-                    }
-                }
+                String salvatoLauncher = prefs.getString("launcher_package", "");
 
                 setSpinnerSelection(spinnerApp1, salvatoApp1);
                 setSpinnerSelection(spinnerApp2, salvatoApp2);
@@ -166,7 +157,6 @@ public class MainActivity extends AppCompatActivity {
             });
         }).start();
 
-        // Listener Annullamento Rapido: Tocca lo schermo ovunque per fermare tutto
         layoutCountdown.setOnTouchListener((v, event) -> {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 fermaSequenza();
@@ -175,7 +165,6 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
-        // Controlli Incremento/Decremento Delay
         btnMinus.setOnTouchListener((v, event) -> {
             int action = event.getAction();
             if (action == MotionEvent.ACTION_DOWN) {
@@ -221,7 +210,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         List<ApplicationInfo> allApps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
-
         installedApps.clear();
         launcherApps.clear();
 
@@ -255,17 +243,10 @@ public class MainActivity extends AppCompatActivity {
         launcherApps.addAll(tempLauncherApps);
     }
 
-    private String trovaPackageLauncherDaLabel(String targetLabel) {
-        for (AppInfo app : launcherApps) {
-            if (app.getLabel().toLowerCase().contains(targetLabel.toLowerCase())) return app.getPackageName();
-        }
-        return "";
-    }
-
     private void setSpinnerSelection(Spinner spinner, String packageName) {
         CustomAppAdapter adapter = (CustomAppAdapter) spinner.getAdapter();
         if (adapter == null) return;
-        if (packageName.isEmpty()) {
+        if (packageName == null || packageName.isEmpty()) {
             spinner.setSelection(0);
             return;
         }
@@ -287,12 +268,10 @@ public class MainActivity extends AppCompatActivity {
                 
                 AppInfo selectedApp = adapter.getItem(position);
                 String targetPackage = (selectedApp != null) ? selectedApp.getPackageName() : "";
-                prefs.edit().putString(prefKey, targetPackage).apply();
                 
-                // Aggiornamento sicuro e allineato di tutti gli spinner di configurazione
-                if (spinnerApp1.getAdapter() != null) ((CustomAppAdapter) spinnerApp1.getAdapter()).notifyDataSetChanged();
-                if (spinnerApp2.getAdapter() != null) ((CustomAppAdapter) spinnerApp2.getAdapter()).notifyDataSetChanged();
-                if (spinnerLauncher.getAdapter() != null) ((CustomAppAdapter) spinnerLauncher.getAdapter()).notifyDataSetChanged();
+                if (prefs != null) {
+                    prefs.edit().putString(prefKey, targetPackage).apply();
+                }
                 
                 updateTabellaRiepilogo();
             }
@@ -302,10 +281,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void saveDelay() {
-        prefs.edit().putInt("delay_seconds", currentDelay).apply();
+        if (prefs != null) {
+            prefs.edit().putInt("delay_seconds", currentDelay).apply();
+        }
     }
 
     private void updateTabellaRiepilogo() {
+        if (prefs == null) return;
         String pkg1 = prefs.getString("app1_package", "");
         String pkg2 = prefs.getString("app2_package", "");
         String pkgLauncher = prefs.getString("launcher_package", "");
@@ -336,6 +318,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void eseguiSequenzaLancio() {
+        if (prefs == null) return;
         String pkg1 = prefs.getString("app1_package", "");
         String pkg2 = prefs.getString("app2_package", "");
         String pkgLauncher = prefs.getString("launcher_package", "");
@@ -347,12 +330,18 @@ public class MainActivity extends AppCompatActivity {
 
         isCountingDown = true;
         
-        // VISUALIZZAZIONE IMMERSIVA DEL COUNTDOWN
         layoutConfigurazione.setVisibility(View.GONE);
         layoutCountdown.setVisibility(View.VISIBLE);
 
-        if (!pkg1.isEmpty()) avviaApplicazioneSingola(pkg1);
-        if (!pkg2.isEmpty()) avviaApplicazioneSingola(pkg2);
+        // CORREZIONE PUNTO 5: Lancio delle app e contrasto immediato dei flash visivi
+        if (!pkg1.isEmpty()) avviaApplicazioneInvisibile(pkg1);
+        if (!pkg2.isEmpty()) avviaApplicazioneInvisibile(pkg2);
+
+        // Richiamo istantaneo forzato senza animazione per rimettere subito in primo piano il countdown
+        Intent richiamaSopra = new Intent(this, MainActivity.class);
+        richiamaSopra.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        startActivity(richiamaSopra);
+        overridePendingTransition(0, 0);
 
         tempoRimanente = currentDelay;
 
@@ -367,7 +356,6 @@ public class MainActivity extends AppCompatActivity {
 
                 if (tempoRimanente > 0) {
                     tvCountdownBig.setText(String.valueOf(tempoRimanente));
-                    
                     int percentuale = (tempoRimanente * 100) / currentDelay;
                     progressCircolare.setProgress(percentuale);
 
@@ -386,7 +374,7 @@ public class MainActivity extends AppCompatActivity {
                     riproduciAudioSingolo(R.raw.chime_soft);
                     
                     countdownHandler.postDelayed(() -> {
-                        avviaApplicazioneSingola(pkgLauncher);
+                        avviaApplicazioneInvisibile(pkgLauncher);
                         fermaSequenza();
                     }, 500);
                 }
@@ -394,27 +382,28 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void avviaApplicazioneInvisibile(String packageName) {
+        try {
+            Intent intent = getPackageManager().getLaunchIntentForPackage(packageName);
+            if (intent != null) {
+                // Rimozione delle transizioni grafiche native di Android per nascondere l'apertura
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION | Intent.FLAG_ACTIVITY_NO_USER_ACTION);
+                startActivity(intent);
+                overridePendingTransition(0, 0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void fermaSequenza() {
         isCountingDown = false;
         countdownHandler.removeCallbacksAndMessages(null);
         fermaAudioLoop();
         
-        // RITORNO REATTIVO ALLA SCHERMATA DI BASE
         layoutCountdown.setVisibility(View.GONE);
         layoutConfigurazione.setVisibility(View.VISIBLE);
         updateTabellaRiepilogo();
-    }
-
-    private void avviaApplicazioneSingola(String packageName) {
-        try {
-            Intent intent = getPackageManager().getLaunchIntentForPackage(packageName);
-            if (intent != null) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     private void riproduciAudioLoop(int resId) {
@@ -480,17 +469,6 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-            AppInfo app = getItem(position);
-            if (app == null) return super.getDropDownView(position, convertView, parent);
-
-            String currentPkg = app.getPackageName();
-            if (!currentPkg.isEmpty() && spinnerId != 3) {
-                String pkg1 = prefs.getString("app1_package", "");
-                String pkg2 = prefs.getString("app2_package", "");
-
-                if (spinnerId == 1 && currentPkg.equals(pkg2)) return new View(getContext());
-                if (spinnerId == 2 && currentPkg.equals(pkg1)) return new View(getContext());
-            }
             return createViewFromResource(position, convertView, parent, true);
         }
 
@@ -507,27 +485,12 @@ public class MainActivity extends AppCompatActivity {
 
             if (app != null) {
                 labelView.setText(app.getLabel());
+                packageView.setText(app.getPackageName().isEmpty() ? "Disattivato" : app.getPackageName());
                 
-                if (app.getPackageName().isEmpty()) {
-                    packageView.setText(spinnerId == 3 ? "Azione Home non configurata" : "Nessuna azione pianificata");
-                    labelView.setTypeface(null, Typeface.NORMAL);
-                    labelView.setTextColor(ContextCompat.getColor(getContext(), android.R.color.holo_green_light));
-                    iconView.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+                if (app.getIcon() != null) {
+                    iconView.setImageDrawable(app.getIcon());
                 } else {
-                    packageView.setText(app.getPackageName());
-                    labelView.setTextColor(ContextCompat.getColor(getContext(), android.R.color.primary_text_dark));
-                    
-                    if (!isDropdown) {
-                        labelView.setTypeface(null, Typeface.BOLD);
-                    } else {
-                        labelView.setTypeface(null, Typeface.NORMAL);
-                    }
-                    
-                    if (app.getIcon() != null) {
-                        iconView.setImageDrawable(app.getIcon());
-                    } else {
-                        iconView.setImageResource(android.R.mipmap.sym_def_app_icon);
-                    }
+                    iconView.setImageResource(android.R.mipmap.sym_def_app_icon);
                 }
             }
             return convertView;
