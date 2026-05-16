@@ -1,287 +1,200 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout 
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#121212"
-    android:padding="6dp">
+    android:keepScreenOn="true">
+
+    <ImageView
+        android:id="@+id/iv_background_watermark"
+        android:layout_width="350dp"
+        android:layout_height="350dp"
+        android:layout_centerInParent="true"
+        android:scaleType="fitCenter"
+        android:src="@mipmap/ic_launcher" />
+
+    <TextView
+        android:id="@+id/tv_titolo_main"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="12dp"
+        android:text="DELAY LAUNCHER"
+        android:textColor="#FFFFFF"
+        android:textSize="22sp"
+        android:textStyle="bold" />
 
     <LinearLayout
         android:id="@+id/layout_configurazione"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_below="@id/tv_titolo_main"
         android:orientation="vertical"
-        android:padding="8dp"
-        android:background="@android:drawable/dialog_holo_dark_frame"
-        android:visibility="visible">
+        android:paddingHorizontal="16dp"
+        android:paddingTop="8dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="DELAY LAUNCHER PRO"
-            android:textColor="#76FF03"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="8dp"
-            android:letterSpacing="0.1" />
-
-        <LinearLayout
+        <GridLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:columnCount="2"
+            android:rowCount="2"
+            android:alignmentMode="alignBounds">
 
             <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="65dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="6dp"
+                android:background="#26FFFFFF"
                 android:orientation="vertical"
-                android:layout_marginEnd="6dp"
-                android:background="#D91A1A1A"
-                android:padding="6dp">
+                android:padding="4dp">
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="1ª App in Background"
+                    android:text="APP 1"
                     android:textColor="#76FF03"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
+                    android:textSize="11sp" />
                 <Spinner
                     android:id="@+id/spinner_app1"
                     android:layout_width="match_parent"
-                    android:layout_height="45dp"
-                    android:layout_marginTop="2dp"
-                    android:spinnerMode="dropdown" />
+                    android:layout_height="match_parent" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="65dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="6dp"
+                android:background="#26FFFFFF"
                 android:orientation="vertical"
-                android:layout_marginStart="6dp"
-                android:background="#D91A1A1A"
+                android:padding="4dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="APP 2"
+                    android:textColor="#76FF03"
+                    android:textSize="11sp" />
+                <Spinner
+                    android:id="@+id/spinner_app2"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="65dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="6dp"
+                android:background="#26FFFFFF"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
                 android:padding="6dp">
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="2ª App in Background"
+                    android:text="DELAY (sec)"
                     android:textColor="#76FF03"
                     android:textSize="11sp"
+                    android:layout_marginEnd="8dp"/>
+                <Button
+                    android:id="@+id/btn_minus"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:text="-"
+                    android:textSize="18sp"/>
+                <TextView
+                    android:id="@+id/tv_delay_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="12dp"
+                    android:text="25"
+                    android:textColor="#76FF03"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
-                <Spinner
-                    android:id="@+id/spinner_app2"
-                    android:layout_width="match_parent"
-                    android:layout_height="45dp"
-                    android:layout_marginTop="2dp"
-                    android:spinnerMode="dropdown" />
+                <Button
+                    android:id="@+id/btn_plus"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:text="+"
+                    android:textSize="18sp"/>
             </LinearLayout>
-        </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="65dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="6dp"
+                android:background="#26FFFFFF"
+                android:orientation="vertical"
+                android:padding="4dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="LAUNCHER"
+                    android:textColor="#76FF03"
+                    android:textSize="11sp" />
+                <Spinner
+                    android:id="@+id/spinner_launcher"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+            </LinearLayout>
+        </GridLayout>
+
+        <Button
+            android:id="@+id/btn_avvio"
+            android:layout_width="220dp"
+            android:layout_height="45dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginVertical="8dp"
+            android:backgroundTint="#76FF03"
+            android:text="▶ AVVIO"
+            android:textColor="#000000"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginEnd="6dp"
-                android:background="#D91A1A1A"
-                android:padding="6dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="DELAY (secondi)"
-                    android:textColor="#76FF03"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="45dp"
-                    android:orientation="horizontal"
-                    android:gravity="center"
-                    android:layout_marginTop="2dp"
-                    android:background="#D9262626">
-                    <Button
-                        android:id="@+id/btn_minus"
-                        android:layout_width="45dp"
-                        android:layout_height="match_parent"
-                        android:text="-"
-                        android:textSize="18sp"
-                        android:backgroundTint="#333333"
-                        android:textColor="#76FF03"
-                        android:padding="0dp" />
-                    <TextView
-                        android:id="@+id/tv_delay_value"
-                        android:layout_width="60dp"
-                        android:layout_height="wrap_content"
-                        android:text="20"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:textColor="#76FF03"
-                        android:gravity="center" />
-                    <Button
-                        android:id="@+id/btn_plus"
-                        android:layout_width="45dp"
-                        android:layout_height="match_parent"
-                        android:text="+"
-                        android:textSize="18sp"
-                        android:backgroundTint="#333333"
-                        android:textColor="#76FF03"
-                        android:padding="0dp" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="6dp"
-                android:background="#D91A1A1A"
-                android:padding="6dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Launcher Finale Domestico"
-                    android:textColor="#76FF03"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-                <Spinner
-                    android:id="@+id/spinner_launcher"
-                    android:layout_width="match_parent"
-                    android:layout_height="45dp"
-                    android:layout_marginTop="2dp"
-                    android:spinnerMode="dropdown" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <Button
-            android:id="@+id/btn_avvio"
-            android:layout_width="240dp"
-            android:layout_height="42dp"
-            android:layout_gravity="center_horizontal"
-            android:text="▶  AVVIO"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="#000000"
-            android:backgroundTint="#76FF03"
-            android:layout_marginBottom="8dp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:background="#26FFFFFF"
             android:orientation="vertical"
-            android:background="@android:drawable/dialog_holo_dark_frame"
-            android:padding="8dp">
+            android:padding="8dp"
+            android:layout_marginTop="4dp">
+            
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="📋 RIEPILOGO CONFIGURAZIONE"
                 android:textColor="#76FF03"
-                android:textSize="11sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
-                android:layout_marginBottom="6dp" />
+                android:layout_marginBottom="4dp"/>
+
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal">
-                <LinearLayout
+                <TextView
+                    android:id="@+id/tv_col_applicazioni"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1.5"
+                    android:textColor="#CCCCCC"
+                    android:textSize="11sp" />
+                <TextView
+                    android:id="@+id/tv_col_delay"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="SEQUENZA"
-                        android:textColor="#76FF03"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="2dp"/>
-                    <TextView
-                        android:id="@+id/tv_col_sequenza"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="1. Avvia App 1\n2. Avvia App 2\n3. Attendi Delay\n4. Avvia Launcher"
-                        android:textColor="#FFFFFF"
-                        android:textSize="10sp"
-                        android:lineSpacingMultiplier="1.2" />
-                </LinearLayout>
-                <LinearLayout
+                    android:textColor="#CCCCCC"
+                    android:textSize="11sp" />
+                <TextView
+                    android:id="@+id/tv_col_stato"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1.6"
-                    android:orientation="vertical"
-                    android:paddingLeft="2dp"
-                    android:paddingRight="2dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="APPLICAZIONI"
-                        android:textColor="#76FF03"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="2dp"/>
-                    <TextView
-                        android:id="@+id/tv_col_applicazioni"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="App 1:\n-\nApp 2:\n-\nLauncher:\n-"
-                        android:textColor="#FFFFFF"
-                        android:textSize="10sp"
-                        android:lineSpacingMultiplier="1.2" />
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="DELAY"
-                        android:textColor="#76FF03"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="2dp"/>
-                    <TextView
-                        android:id="@+id/tv_col_delay"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="20 secondi\n\nCountdown pronto"
-                        android:textColor="#FFFFFF"
-                        android:textSize="10sp"
-                        android:lineSpacingMultiplier="1.2" />
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="STATO"
-                        android:textColor="#76FF03"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="2dp"/>
-                    <TextView
-                        android:id="@+id/tv_col_stato"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="✓ Pronto"
-                        android:textColor="#FFFFFF"
-                        android:textSize="10sp"
-                        android:lineSpacingMultiplier="1.2" />
-                </LinearLayout>
+                    android:textColor="#76FF03"
+                    android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
@@ -290,73 +203,25 @@
         android:id="@+id/layout_countdown"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#121212"
+        android:background="#000000"
         android:visibility="gone">
 
-        <ImageView
-            android:id="@+id/iv_countdown_bg"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@mipmap/ic_launcher"
-            android:scaleType="centerInside"
-            android:alpha="0.30"
-            android:importantForAccessibility="no" />
-
-        <RelativeLayout
-            android:id="@+id/container_cerchio"
-            android:layout_width="260dp"
-            android:layout_height="260dp"
-            android:layout_centerInParent="true">
-
-            <ProgressBar
-                android:id="@+id/progress_circolare"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:indeterminate="false"
-                android:max="100"
-                android:progress="100"
-                android:progressDrawable="@drawable/circular_progress" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_centerInParent="true"
-                android:gravity="center">
-
-                <TextView
-                    android:id="@+id/tv_countdown_big"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="20"
-                    android:textColor="#76FF03"
-                    android:textSize="80sp"
-                    android:textStyle="bold"
-                    android:includeFontPadding="false" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="sec"
-                    android:textColor="#76FF03"
-                    android:textSize="22sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="-5dp" />
-            </LinearLayout>
-        </RelativeLayout>
+        <ProgressBar
+            android:id="@+id/progress_circolare"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="220dp"
+            android:layout_height="220dp"
+            android:layout_centerInParent="true"
+            android:indeterminate="false"
+            android:progressDrawable="@android:drawable/progress_horizontal" />
 
         <TextView
+            android:id="@+id/tv_countdown_big"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/container_cerchio"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="25dp"
-            android:text="Tocca lo schermo per annullare"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="normal"
-            android:shadowColor="#000000"
-            android:shadowRadius="4" />
+            android:layout_centerInParent="true"
+            android:textColor="#76FF03"
+            android:textSize="70sp"
+            android:textStyle="bold" />
     </RelativeLayout>
 </RelativeLayout>
