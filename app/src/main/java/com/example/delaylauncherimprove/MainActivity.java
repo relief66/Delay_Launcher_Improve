@@ -8,6 +8,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
@@ -46,6 +47,11 @@ public class MainActivity extends AppCompatActivity {
     private final Handler countdownHandler = new Handler();
     private int tempoRimanente = 0;
     private boolean isCountingDown = false;
+
+    // Media Players per la gestione dei suoni richiesti
+    private MediaPlayer playerLoop = null;
+    private MediaPlayer playerTick = null;
+    private MediaPlayer playerChime = null;
 
     // Gestione Auto-Repeat tasti Delay
     private final Handler repeatUpdateHandler = new Handler();
@@ -105,7 +111,6 @@ public class MainActivity extends AppCompatActivity {
 
         recuperaApplicazioniInstallate();
 
-        // Popoliamo gli Spinner UNA VOLTA SOLA. Niente più distruzioni cicliche.
         spinnerApp1.setAdapter(new CustomAppAdapter(this, installedApps, spinnerApp1, 1));
         spinnerApp2.setAdapter(new CustomAppAdapter(this, installedApps, spinnerApp2, 2));
         spinnerLauncher.setAdapter(new CustomAppAdapter(this, installedApps, spinnerLauncher, 3));
@@ -159,7 +164,6 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
-        // Pulsante AVVIO REALE: Fa partire la sequenza dei motori
         btnAvvio.setOnClickListener(v -> {
             if (isCountingDown) {
                 fermaSequenza();
@@ -229,7 +233,6 @@ public class MainActivity extends AppCompatActivity {
 
                 prefs.edit().putString(prefKey, targetPackage).apply();
                 
-                // Notifichiamo agli altri spinner che i filtri visivi dropdown sono cambiati, senza distruggere nulla!
                 ((CustomAppAdapter) spinnerApp1.getAdapter()).notifyDataSetChanged();
                 ((CustomAppAdapter) spinnerApp2.getAdapter()).notifyDataSetChanged();
                 
@@ -278,7 +281,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // IL MOTORE REALE DELLA SEQUENZA DI LANCIO DI ANDROID
+    // MOTORE CON AUDIO INTEGRATO E CONTROLLO DEI SECONDI ESATTI
     private void eseguiSequenzaLancio() {
         String pkg1 = prefs.getString("app1_package", "");
         String pkg2 = prefs.getString("app2_package", "");
@@ -291,21 +294,20 @@ public class MainActivity extends AppCompatActivity {
 
         isCountingDown = true;
         btnAvvio.setText("⏹ FERMA AVVIO");
-        btnAvvio.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFFF1744)); // Rosso stop
+        btnAvvio.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFFF1744));
         tvColStato.setText("⏳ In corso...\n\nSequenza attiva");
 
-        // FASE 1: Avvio istantaneo App 1 se configurata
-        if (!pkg1.isEmpty()) {
-            avviaApplicazioneSingola(pkg1);
-        }
+        // Fase 1 e 2: Lancio background immediato
+        if (!pkg1.isEmpty()) avviaApplicazioneSingola(pkg1);
+        if (!pkg2.isEmpty()) avviaApplicazioneSingola(pkg2);
 
-        // FASE 2: Avvio istantaneo App 2 se configurata
-        if (!pkg2.isEmpty()) {
-            avviaApplicazioneSingola(pkg2);
-        }
-
-        // FASE 3: Inizio del vero Countdown prima dell'Home Launcher definitivo
         tempoRimanente = currentDelay;
+
+        // Fino a 4 secondi compresi facciamo partire il LOOP audio continuo
+        if (tempoRimanente >= 4) {
+            riproduciAudioLoop(R.raw.countdown_loop);
+        }
+
         countdownHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -313,13 +315,26 @@ public class MainActivity extends AppCompatActivity {
 
                 if (tempoRimanente > 0) {
                     tvColDelay.setText(tempoRimanente + " secondi\n\nAttendere...");
+
+                    // GESTIONE CAMBIO SUONI DINAMICI
+                    if (tempoRimanente == 3) {
+                        fermaAudioLoop(); // Spegne il loop continuo a 4 secondi passati
+                        riproduciAudioSingolo(R.raw.tick_soft); // Primo Tick a 3 secondi
+                    } else if (tempoRimanente == 2 || tempoRimanente == 1) {
+                        riproduciAudioSingolo(R.raw.tick_soft); // Tick per 2 e 1 secondi
+                    }
+
                     tempoRimanente--;
                     countdownHandler.postDelayed(this, 1000);
                 } else {
-                    // FASE 4: Fine tempo, scatta il lancio del Launcher Finale Domestico
+                    // SECONDO ZERO: Chime finale e lancio launcher domestico
                     tvColDelay.setText("0 secondi\n\nLancio Home!");
-                    avviaApplicazioneSingola(pkgLauncher);
-                    fermaSequenza();
+                    riproduciAudioSingolo(R.raw.chime_soft);
+                    
+                    countdownHandler.postDelayed(() -> {
+                        avviaApplicazioneSingola(pkgLauncher);
+                        fermaSequenza();
+                    }, 500); // Mezzo secondo di respiro per far sentire il Chime prima di cambiare schermo
                 }
             }
         });
@@ -328,8 +343,10 @@ public class MainActivity extends AppCompatActivity {
     private void fermaSequenza() {
         isCountingDown = false;
         countdownHandler.removeCallbacksAndMessages(null);
+        fermaAudioLoop();
+        liberaRisorseAudio();
         btnAvvio.setText("▶  AVVIO");
-        btnAvvio.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF76FF03)); // Torna Verde
+        btnAvvio.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF76FF03));
         updateTabellaRiepilogo();
     }
 
@@ -345,7 +362,57 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // NUOVO ADATTATORE FLUIDO: Gestisce la mutua esclusione in tempo reale nel dropdown senza bloccare i touch
+    // FUNZIONI DI SUPPORTO AUDIO PER I PLAYER DI SISTEMA
+    private void riproduciAudioLoop(int resId) {
+        try {
+            fermaAudioLoop();
+            playerLoop = MediaPlayer.create(this, resId);
+            if (playerLoop != null) {
+                playerLoop.setLooping(true);
+                playerLoop.start();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void fermaAudioLoop() {
+        if (playerLoop != null) {
+            try {
+                if (playerLoop.isPlaying()) {
+                    playerLoop.stop();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            playerLoop.release();
+            playerLoop = null;
+        }
+    }
+
+    private void riproduciAudioSingolo(int resId) {
+        try {
+            MediaPlayer mp = MediaPlayer.create(this, resId);
+            if (mp != null) {
+                mp.setOnCompletionListener(MediaPlayer::release);
+                mp.start();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void liberaRisorseAudio() {
+        fermaAudioLoop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        liberaRisorseAudio();
+    }
+
+    // ADATTATORE FLUIDO DROPDOWN
     private class CustomAppAdapter extends ArrayAdapter<AppInfo> {
         private final int spinnerId;
         private final LayoutInflater inflater;
@@ -372,12 +439,11 @@ public class MainActivity extends AppCompatActivity {
                 String pkg1 = prefs.getString("app1_package", "");
                 String pkg2 = prefs.getString("app2_package", "");
 
-                // Se l'applicazione è selezionata nell'altro spinner, la nascondiamo dal menu a tendina dropdown
                 if (spinnerId == 1 && currentPkg.equals(pkg2)) {
-                    return new View(getContext()); // Nasconde la riga collassandola a dimensione zero
+                    return new View(getContext());
                 }
                 if (spinnerId == 2 && currentPkg.equals(pkg1)) {
-                    return new View(getContext()); // Nasconde la riga collassandola a dimensione zero
+                    return new View(getContext());
                 }
             }
             return createViewFromResource(position, convertView, parent, true);
@@ -400,14 +466,14 @@ public class MainActivity extends AppCompatActivity {
                 if (app.getPackageName().isEmpty()) {
                     packageView.setText("Nessuna azione pianificata");
                     labelView.setTypeface(null, Typeface.NORMAL);
-                    labelView.setTextColor(0xFF76FF03); // Verde Acido per la scelta vuota
+                    labelView.setTextColor(0xFF76FF03);
                     iconView.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
                 } else {
                     packageView.setText(app.getPackageName());
                     labelView.setTextColor(0xFFFFFFFF);
                     
                     if (!isDropdown) {
-                        labelView.setTypeface(null, Typeface.BOLD); // Diventa Bold solo se confermata sul Box chiuso
+                        labelView.setTypeface(null, Typeface.BOLD);
                     } else {
                         labelView.setTypeface(null, Typeface.NORMAL);
                     }
