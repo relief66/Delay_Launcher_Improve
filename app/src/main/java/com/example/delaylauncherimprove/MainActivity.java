@@ -347,7 +347,7 @@ public class MainActivity extends AppCompatActivity {
         
         // VISUALIZZAZIONE IMMERSIVA DEL COUNTDOWN
         layoutConfigurazione.setVisibility(View.GONE);
-        layoutCountdown.setVisibility(View.getVisible());
+        layoutCountdown.setVisibility(View.VISIBLE());
 
         if (!pkg1.isEmpty()) avviaApplicazioneSingola(pkg1);
         if (!pkg2.isEmpty()) avviaApplicazioneSingola(pkg2);
