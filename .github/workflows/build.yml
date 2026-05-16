@@ -41,8 +41,7 @@ jobs:
       - name: Build debug APK
         run: bash gradlew assembleDebug
 
-      - name: Upload APK artifact
-        - name: Rinomina APK con numero build
+      - name: Rinomina APK con numero build
         run: mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/delay-launcher-b${{ github.run_number }}.apk
 
       - name: Upload APK artifact
