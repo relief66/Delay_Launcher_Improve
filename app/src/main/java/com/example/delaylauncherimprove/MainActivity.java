@@ -2,6 +2,7 @@ package com.example.delaylauncherimprove;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -39,9 +40,14 @@ public class MainActivity extends AppCompatActivity {
 
     private SharedPreferences prefs;
     private int currentDelay = 20;
-    private List<AppInfo> installedApps = new ArrayList<>();
-    private boolean isUpdatingSpinners = false;
+    private final List<AppInfo> installedApps = new ArrayList<>();
 
+    // Gestione Ingranaggi Countdown e Sequenza Lancio
+    private final Handler countdownHandler = new Handler();
+    private int tempoRimanente = 0;
+    private boolean isCountingDown = false;
+
+    // Gestione Auto-Repeat tasti Delay
     private final Handler repeatUpdateHandler = new Handler();
     private boolean mAutoIncrement = false;
     private boolean mAutoDecrement = false;
@@ -50,17 +56,12 @@ public class MainActivity extends AppCompatActivity {
     private final Runnable incrementRunnable = new Runnable() {
         @Override
         public void run() {
-            if (mAutoIncrement) {
-                if (currentDelay < 60) {
-                    currentDelay++;
-                    tvDelayValue.setText(String.valueOf(currentDelay));
-                    saveDelay();
-                    updateTabellaRiepilogo();
-                    repeatUpdateHandler.postDelayed(this, REPEAT_DELAY);
-                } else {
-                    mAutoIncrement = false;
-                    Toast.makeText(MainActivity.this, "Massimo 60 secondi consentiti!", Toast.LENGTH_SHORT).show();
-                }
+            if (mAutoIncrement && currentDelay < 60) {
+                currentDelay++;
+                tvDelayValue.setText(String.valueOf(currentDelay));
+                saveDelay();
+                updateTabellaRiepilogo();
+                repeatUpdateHandler.postDelayed(this, REPEAT_DELAY);
             }
         }
     };
@@ -68,17 +69,12 @@ public class MainActivity extends AppCompatActivity {
     private final Runnable decrementRunnable = new Runnable() {
         @Override
         public void run() {
-            if (mAutoDecrement) {
-                if (currentDelay > 3) {
-                    currentDelay--;
-                    tvDelayValue.setText(String.valueOf(currentDelay));
-                    saveDelay();
-                    updateTabellaRiepilogo();
-                    repeatUpdateHandler.postDelayed(this, REPEAT_DELAY);
-                } else {
-                    mAutoDecrement = false;
-                    Toast.makeText(MainActivity.this, "Minimo 3 secondi richiesti!", Toast.LENGTH_SHORT).show();
-                }
+            if (mAutoDecrement && currentDelay > 3) {
+                currentDelay--;
+                tvDelayValue.setText(String.valueOf(currentDelay));
+                saveDelay();
+                updateTabellaRiepilogo();
+                repeatUpdateHandler.postDelayed(this, REPEAT_DELAY);
             }
         }
     };
@@ -109,10 +105,10 @@ public class MainActivity extends AppCompatActivity {
 
         recuperaApplicazioniInstallate();
 
-        // Inizializzazione con l'adattatore custom grafico
-        popolaSpinner(spinnerApp1, installedApps);
-        popolaSpinner(spinnerApp2, installedApps);
-        popolaSpinner(spinnerLauncher, installedApps);
+        // Popoliamo gli Spinner UNA VOLTA SOLA. Niente più distruzioni cicliche.
+        spinnerApp1.setAdapter(new CustomAppAdapter(this, installedApps, spinnerApp1, 1));
+        spinnerApp2.setAdapter(new CustomAppAdapter(this, installedApps, spinnerApp2, 2));
+        spinnerLauncher.setAdapter(new CustomAppAdapter(this, installedApps, spinnerLauncher, 3));
 
         String salvatoApp1 = prefs.getString("app1_package", "");
         String salvatoApp2 = prefs.getString("app2_package", "");
@@ -163,11 +159,15 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
+        // Pulsante AVVIO REALE: Fa partire la sequenza dei motori
         btnAvvio.setOnClickListener(v -> {
-            Toast.makeText(MainActivity.this, "Avvio manuale sequenza...", Toast.LENGTH_SHORT).show();
+            if (isCountingDown) {
+                fermaSequenza();
+            } else {
+                eseguiSequenzaLancio();
+            }
         });
 
-        aggiornaFiltriEsclusione();
         updateTabellaRiepilogo();
     }
 
@@ -201,20 +201,13 @@ public class MainActivity extends AppCompatActivity {
         return "";
     }
 
-    private void popolaSpinner(Spinner spinner, List<AppInfo> listaApps) {
-        CustomAppAdapter adapter = new CustomAppAdapter(this, listaApps);
-        spinner.setAdapter(adapter);
-    }
-
     private void setSpinnerSelection(Spinner spinner, String packageName) {
         CustomAppAdapter adapter = (CustomAppAdapter) spinner.getAdapter();
         if (adapter == null) return;
-        
         if (packageName.isEmpty()) {
             spinner.setSelection(0);
             return;
         }
-        
         for (int i = 0; i < adapter.getCount(); i++) {
             AppInfo app = adapter.getItem(i);
             if (app != null && app.getPackageName().equals(packageName)) {
@@ -228,8 +221,6 @@ public class MainActivity extends AppCompatActivity {
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (isUpdatingSpinners) return;
-
                 CustomAppAdapter adapter = (CustomAppAdapter) parent.getAdapter();
                 if (adapter == null) return;
                 
@@ -238,42 +229,16 @@ public class MainActivity extends AppCompatActivity {
 
                 prefs.edit().putString(prefKey, targetPackage).apply();
                 
-                if (spinner == spinnerApp1 || spinner == spinnerApp2) {
-                    aggiornaFiltriEsclusione();
-                }
+                // Notifichiamo agli altri spinner che i filtri visivi dropdown sono cambiati, senza distruggere nulla!
+                ((CustomAppAdapter) spinnerApp1.getAdapter()).notifyDataSetChanged();
+                ((CustomAppAdapter) spinnerApp2.getAdapter()).notifyDataSetChanged();
+                
                 updateTabellaRiepilogo();
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
-    }
-
-    private void aggiornaFiltriEsclusione() {
-        isUpdatingSpinners = true;
-
-        String pkg1 = prefs.getString("app1_package", "");
-        String pkg2 = prefs.getString("app2_package", "");
-
-        List<AppInfo> listaPerApp2 = new ArrayList<>();
-        for (AppInfo app : installedApps) {
-            if (app.getPackageName().isEmpty() || !app.getPackageName().equals(pkg1)) {
-                listaPerApp2.add(app);
-            }
-        }
-        popolaSpinner(spinnerApp2, listaPerApp2);
-        setSpinnerSelection(spinnerApp2, pkg2);
-
-        List<AppInfo> listaPerApp1 = new ArrayList<>();
-        for (AppInfo app : installedApps) {
-            if (app.getPackageName().isEmpty() || !app.getPackageName().equals(pkg2)) {
-                listaPerApp1.add(app);
-            }
-        }
-        popolaSpinner(spinnerApp1, listaPerApp1);
-        setSpinnerSelection(spinnerApp1, pkg1);
-
-        isUpdatingSpinners = false;
     }
 
     private void saveDelay() {
@@ -297,45 +262,129 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        if (app1.length() > 14) app1 = app1.substring(0, 12) + "..";
-        if (app2.length() > 14) app2 = app2.substring(0, 12) + "..";
-        if (launcher.length() > 14) launcher = launcher.substring(0, 12) + "..";
+        if (app1.length() > 16) app1 = app1.substring(0, 14) + "..";
+        if (app2.length() > 16) app2 = app2.substring(0, 14) + "..";
+        if (launcher.length() > 16) launcher = launcher.substring(0, 14) + "..";
 
-        String testoApplicazioni = "App 1:\n" + app1 + "\nApp 2:\n" + app2 + "\nLauncher:\n" + launcher;
-        tvColApplicazioni.setText(testoApplicazioni);
+        tvColApplicazioni.setText("App 1:\n" + app1 + "\nApp 2:\n" + app2 + "\nLauncher:\n" + launcher);
 
-        String testoDelay = currentDelay + " secondi\n\nCountdown\nattivo";
-        tvColDelay.setText(testoDelay);
-
-        if (pkgLauncher.isEmpty()) {
-            tvColStato.setText("⚠ Errore\n\nScegli Home");
-        } else {
-            tvColStato.setText("✓ Pronto\n\nConfigurato");
+        if (!isCountingDown) {
+            tvColDelay.setText(currentDelay + " secondi\n\nCountdown pronto");
+            if (pkgLauncher.isEmpty()) {
+                tvColStato.setText("⚠ Errore\n\nScegli Home");
+            } else {
+                tvColStato.setText("✓ Pronto\n\nConfigurato");
+            }
         }
     }
 
-    // ADATTATORE GRAFICO PERSONALIZZATO PER SELEZIONE E BOLD
-    private static class CustomAppAdapter extends ArrayAdapter<AppInfo> {
+    // IL MOTORE REALE DELLA SEQUENZA DI LANCIO DI ANDROID
+    private void eseguiSequenzaLancio() {
+        String pkg1 = prefs.getString("app1_package", "");
+        String pkg2 = prefs.getString("app2_package", "");
+        String pkgLauncher = prefs.getString("launcher_package", "");
+
+        if (pkgLauncher.isEmpty()) {
+            Toast.makeText(this, "Impossibile avviare: Seleziona un Launcher finale!", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        isCountingDown = true;
+        btnAvvio.setText("⏹ FERMA AVVIO");
+        btnAvvio.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFFF1744)); // Rosso stop
+        tvColStato.setText("⏳ In corso...\n\nSequenza attiva");
+
+        // FASE 1: Avvio istantaneo App 1 se configurata
+        if (!pkg1.isEmpty()) {
+            avviaApplicazioneSingola(pkg1);
+        }
+
+        // FASE 2: Avvio istantaneo App 2 se configurata
+        if (!pkg2.isEmpty()) {
+            avviaApplicazioneSingola(pkg2);
+        }
+
+        // FASE 3: Inizio del vero Countdown prima dell'Home Launcher definitivo
+        tempoRimanente = currentDelay;
+        countdownHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (!isCountingDown) return;
+
+                if (tempoRimanente > 0) {
+                    tvColDelay.setText(tempoRimanente + " secondi\n\nAttendere...");
+                    tempoRimanente--;
+                    countdownHandler.postDelayed(this, 1000);
+                } else {
+                    // FASE 4: Fine tempo, scatta il lancio del Launcher Finale Domestico
+                    tvColDelay.setText("0 secondi\n\nLancio Home!");
+                    avviaApplicazioneSingola(pkgLauncher);
+                    fermaSequenza();
+                }
+            }
+        });
+    }
+
+    private void fermaSequenza() {
+        isCountingDown = false;
+        countdownHandler.removeCallbacksAndMessages(null);
+        btnAvvio.setText("▶  AVVIO");
+        btnAvvio.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF76FF03)); // Torna Verde
+        updateTabellaRiepilogo();
+    }
+
+    private void avviaApplicazioneSingola(String packageName) {
+        try {
+            Intent intent = getPackageManager().getLaunchIntentForPackage(packageName);
+            if (intent != null) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Errore nel lancio di: " + packageName, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // NUOVO ADATTATORE FLUIDO: Gestisce la mutua esclusione in tempo reale nel dropdown senza bloccare i touch
+    private class CustomAppAdapter extends ArrayAdapter<AppInfo> {
+        private final int spinnerId;
         private final LayoutInflater inflater;
 
-        public CustomAppAdapter(@NonNull Context context, @NonNull List<AppInfo> objects) {
+        public CustomAppAdapter(@NonNull Context context, @NonNull List<AppInfo> objects, Spinner spinner, int spinnerId) {
             super(context, 0, objects);
-            inflater = LayoutInflater.from(context);
+            this.spinnerId = spinnerId;
+            this.inflater = LayoutInflater.from(context);
         }
 
         @NonNull
         @Override
         public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-            return createCustomView(position, convertView, parent, false);
+            return createViewFromResource(position, convertView, parent, false);
         }
 
         @Override
         public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-            return createCustomView(position, convertView, parent, true);
+            AppInfo app = getItem(position);
+            if (app == null) return super.getDropDownView(position, convertView, parent);
+
+            String currentPkg = app.getPackageName();
+            if (!currentPkg.isEmpty()) {
+                String pkg1 = prefs.getString("app1_package", "");
+                String pkg2 = prefs.getString("app2_package", "");
+
+                // Se l'applicazione è selezionata nell'altro spinner, la nascondiamo dal menu a tendina dropdown
+                if (spinnerId == 1 && currentPkg.equals(pkg2)) {
+                    return new View(getContext()); // Nasconde la riga collassandola a dimensione zero
+                }
+                if (spinnerId == 2 && currentPkg.equals(pkg1)) {
+                    return new View(getContext()); // Nasconde la riga collassandola a dimensione zero
+                }
+            }
+            return createViewFromResource(position, convertView, parent, true);
         }
 
-        private View createCustomView(int position, View convertView, ViewGroup parent, boolean isDropdown) {
-            if (convertView == null) {
+        private View createViewFromResource(int position, View convertView, ViewGroup parent, boolean isDropdown) {
+            if (convertView == null || convertView.getClass() == View.class) {
                 convertView = inflater.inflate(R.layout.spinner_item_custom, parent, false);
             }
 
@@ -349,19 +398,16 @@ public class MainActivity extends AppCompatActivity {
                 labelView.setText(app.getLabel());
                 
                 if (app.getPackageName().isEmpty()) {
-                    // Impostazioni per "Nessuna Applicazione"
                     packageView.setText("Nessuna azione pianificata");
                     labelView.setTypeface(null, Typeface.NORMAL);
-                    labelView.setTextColor(0xFF76FF03); // Verde acido per la voce nulla
+                    labelView.setTextColor(0xFF76FF03); // Verde Acido per la scelta vuota
                     iconView.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
                 } else {
-                    // Impostazioni per app reale selezionata
                     packageView.setText(app.getPackageName());
-                    labelView.setTextColor(0xFFFFFFFF); // Bianco
+                    labelView.setTextColor(0xFFFFFFFF);
                     
                     if (!isDropdown) {
-                        // Se l'app è selezionata nel box chiuso, diventa BOLD
-                        labelView.setTypeface(null, Typeface.BOLD);
+                        labelView.setTypeface(null, Typeface.BOLD); // Diventa Bold solo se confermata sul Box chiuso
                     } else {
                         labelView.setTypeface(null, Typeface.NORMAL);
                     }
