@@ -1,4 +1,6 @@
-package com.example.delaylauncher;
+package com.example.delaylauncherimprove;
+
+import com.example.delaylauncherimprove.R;
 
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
